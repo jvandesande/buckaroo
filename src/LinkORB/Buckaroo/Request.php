@@ -11,14 +11,30 @@ class Request {
 	private $websiteKey = null;
 	private $culture = 'nl-NL';
 	private $testMode = false;
+    protected static $defaultSoapOptions = array(
+        'trace' => 1,
+        'classmap' => array(
+            'Body' => 'LinkORB\\Buckaroo\\SOAP\\Type\\Body',
+            'Status' => 'LinkORB\\Buckaroo\\SOAP\\Type\\Status',
+            'RequiredAction' => 'LinkORB\\Buckaroo\\SOAP\\Type\\RequiredAction',
+            'ParameterError' => 'LinkORB\\Buckaroo\\SOAP\\Type\\ParameterError',
+            'CustomParameterError' => 'LinkORB\\Buckaroo\\SOAP\\Type\\CustomParameterError',
+            'ServiceError' => 'LinkORB\\Buckaroo\\SOAP\\Type\\ServiceError',
+            'ActionError' => 'LinkORB\\Buckaroo\\SOAP\\Type\\ActionError',
+            'ChannelError' => 'LinkORB\\Buckaroo\\SOAP\\Type\\ChannelError',
+            'RequestErrors' => 'LinkORB\\Buckaroo\\SOAP\\Type\\RequestErrors',
+            'StatusCode' => 'LinkORB\\Buckaroo\\SOAP\\Type\\StatusCode',
+            'StatusSubCode' => 'LinkORB\\Buckaroo\\SOAP\\Type\\StatusCode',
+        )
+    );
 
-	public function __construct($websiteKey = null, $testMode = false) {
+	public function __construct($websiteKey = null, $testMode = false, array $soapOptions = array()) {
 		
 		$this->websiteKey = $websiteKey;
         $this->testMode = $testMode;
 
 		$wsdl_url = "https://checkout.buckaroo.nl/soap/soap.svc?wsdl";
-		$this->soapClient = new SoapClientWSSEC($wsdl_url, array('trace'=>1));
+		$this->soapClient = new SoapClientWSSEC($wsdl_url, array_merge(static::$defaultSoapOptions, $soapOptions));
 	}
 
 	public function loadPem($filename) {
@@ -75,16 +91,17 @@ class Request {
 		}
 		switch($type) {
 			case 'invoiceinfo':
-				$this->soapClient->InvoiceInfo($TransactionRequest);
+				$response = $this->soapClient->InvoiceInfo($TransactionRequest);
 				break;
 			case 'transaction':
-				$this->soapClient->TransactionRequest($TransactionRequest);
+                $response = $this->soapClient->TransactionRequest($TransactionRequest);
 				break;
 			case 'refundinfo':
-				$this->soapClient->RefundInfo($TransactionRequest);
+				$response = $this->soapClient->RefundInfo($TransactionRequest);
 				break;
 		}
 
+		$return['result'] = $response;
 		$return['response'] = $this->soapClient->__getLastResponse();
 		$return['request']  = $this->soapClient->__getLastRequest();
 		return $return;
