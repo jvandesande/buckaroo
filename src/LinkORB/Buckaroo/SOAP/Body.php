@@ -22,4 +22,5 @@ class Body
  	public $AdditionalParameters;
     public $RefundInfo;
     public $ContinueOnIncomplete;
+    public $PushURL;
 }
